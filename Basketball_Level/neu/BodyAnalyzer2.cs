@@ -11,6 +11,7 @@ public class BodyAnalyzer2 : MonoBehaviour
 	private LevelModel model;
 	private LevelController2 levelController;
 	private PlayerController playerController;
+	private LevelView levelView;
 
 	public LevelModel SetModel {
 		set {
@@ -27,6 +28,12 @@ public class BodyAnalyzer2 : MonoBehaviour
 	public PlayerController SetPlayerController {
 		set {
 			playerController = value;
+		}
+	}
+
+	public LevelView SetLevelView {
+		set {
+			levelView = value;
 		}
 	}
 
@@ -116,7 +123,7 @@ public class BodyAnalyzer2 : MonoBehaviour
 					}
 
 					if (lStatus == LevelModel.LevelStatus.ThrowBall) {
-						if (playerLevel == 1) {
+						/*if (playerLevel == 1) {
 							if (model.Posture == LevelModel.BodyPose.Sitting) {
 								calculateBallVelocity ();
 							}
@@ -124,8 +131,8 @@ public class BodyAnalyzer2 : MonoBehaviour
 							if (model.Posture == LevelModel.BodyPose.Standing) {
 								calculateBallVelocity ();
 							}
-						}
-
+						}*/
+						calculateBallVelocity ();
 					}
 				}
 			}

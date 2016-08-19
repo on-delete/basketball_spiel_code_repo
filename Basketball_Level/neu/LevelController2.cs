@@ -13,15 +13,16 @@ public class LevelController2 : ScriptableObject
 	private int countHits;
 	private int attempts;
 
-	public LevelController2 (LevelModel newModel, LevelView view)
+	public void init (LevelModel newModel, LevelView view)
 	{
 		model = newModel;
 		levelView = view;
 		model.lStatus = LevelModel.LevelStatus.WaitForStartGesture;
+		model.isSoundActivated = true;
 
 		playerData = LoadSaveController.Load ();
 		//model.PlayerLevel = playerData.level;
-		model.PlayerLevel = 2;
+		model.PlayerLevel = 1;
 		model.BallPosition = LevelModel.ObjectPosition.Left;
 	}
 
@@ -35,19 +36,31 @@ public class LevelController2 : ScriptableObject
 			}
 		case "grab.ball":
 			{
-				levelView.playSound (2);
-				model.lStatus = LevelModel.LevelStatus.GrabBall;
-
-				if (model.BallPosition == LevelModel.ObjectPosition.Left) {
-					levelView.instantiateRightBasket ();
+				if (model.Posture != LevelModel.BodyPose.Sitting) {
+					levelView.playerNotSitting ();
 				} else {
-					levelView.instantiateLeftBasket ();
+					levelView.playSound (2);
+					levelView.playSound (4);
+					model.lStatus = LevelModel.LevelStatus.GrabBall;
+
+					if (model.BallPosition == LevelModel.ObjectPosition.Left) {
+						levelView.instantiateRightBasket ();
+					} else {
+						levelView.instantiateLeftBasket ();
+					}
 				}
 				break;
 			}
 		case "throw.ball":
 			{
-				model.lStatus = LevelModel.LevelStatus.ThrowBall;
+				if (model.PlayerLevel == 2 && model.Posture != LevelModel.BodyPose.Standing) {
+					levelView.playerNotStanding ();
+				} else {
+
+					levelView.playSound (2);
+					levelView.playSound (5);
+					model.lStatus = LevelModel.LevelStatus.ThrowBall;
+				}
 				break;
 			}
 		case "ball.throw.complete":

@@ -10,8 +10,8 @@ public class PlayerView : MonoBehaviour, IPlayerView
 	private static Color32 green = new Color32 (0, 180, 0, 255);
 	private static Color32 white = new Color32 (255, 255, 255, 255);
 
-	List<AudioClip> audioList = new List<AudioClip> {
-	};
+	List<AudioClip> audioList = new List<AudioClip> ();
+	private List<int> audioQueue = new List<int> ();
 
 	private AudioSource source;
 
@@ -19,6 +19,8 @@ public class PlayerView : MonoBehaviour, IPlayerView
 	{
 		worksuitMeshMaterial = GameObject.FindWithTag ("playerMesh").GetComponent<SkinnedMeshRenderer> ().material;
 		source = GetComponent<AudioSource> ();
+
+		StartCoroutine (audioQueueProcessor ());
 	}
 
 	public void setMeshColorFailure ()
@@ -61,11 +63,28 @@ public class PlayerView : MonoBehaviour, IPlayerView
 
 	public void playSound (int sound)
 	{
-		source.PlayOneShot (audioList [sound]);
+		if (source.isPlaying) {
+			audioQueue.Add (sound);
+		} else {
+			source.PlayOneShot (audioList [sound]);
+		}
 	}
 
 	public void stopSound ()
 	{
 		source.Stop ();
+	}
+
+	IEnumerator audioQueueProcessor ()
+	{
+		while (true) {
+			yield return new WaitForSeconds (0.5f);
+
+			if (audioQueue.Count != 0 && source.isPlaying == false) {
+				int actualSound = audioQueue [0];
+				audioQueue.RemoveAt (0);
+				source.PlayOneShot (audioList [actualSound]);
+			}
+		}
 	}
 }

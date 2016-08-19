@@ -20,4 +20,8 @@ public interface ILevelView
 	void startGame ();
 
 	void stopGame ();
+
+	void playerNotSitting ();
+
+	void playerNotStanding ();
 }

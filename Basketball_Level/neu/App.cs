@@ -7,6 +7,7 @@ public class App : MonoBehaviour
 	public LevelView levelView;
 	public PlayerView playerView;
 	public BodyAnalyzer2 bodyAnalyzer;
+	public OptionGUI optionGui;
 
 	private PlayerController playerController;
 	private LevelController2 levelController;
@@ -36,13 +37,17 @@ public class App : MonoBehaviour
 		playerController = new PlayerController (playerView);
 
 		levelModel = new LevelModel ();
-		levelController = new LevelController2 (levelModel, levelView);
+		levelController = ScriptableObject.CreateInstance<LevelController2> ();
+		levelController.init (levelModel, levelView);
+
+		optionGui.SetModel = levelModel;
+
+		levelView.SetLevelController = levelController;
+		levelView.SetModel = levelModel;
 
 		bodyAnalyzer.SetLevelController = levelController;
 		bodyAnalyzer.SetModel = levelModel;
 		bodyAnalyzer.SetPlayerController = playerController;
-
-		levelView.SetLevelController = levelController;
-		levelView.SetModel = levelModel;
+		bodyAnalyzer.SetLevelView = levelView;
 	}
 }

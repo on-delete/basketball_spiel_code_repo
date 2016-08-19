@@ -29,11 +29,24 @@ public class LevelView : MonoBehaviour, ILevelView
 	public GUIText endScoreText;
 
 	public AudioClip shoortBeep;
+	//0
 	public AudioClip censoredBeep;
+	//1
 	public AudioClip beepPing;
+	//2
 	public AudioClip success;
+	//3
+	public AudioClip ballAufnehmen;
+	//4
+	public AudioClip ballWerfen;
+	//5
+	public AudioClip bitteAufstehen;
+	//6
+	public AudioClip biiteHinsetzen;
+	//7
 
-	List<AudioClip> audioList = new List<AudioClip> ();
+	private List<AudioClip> audioList = new List<AudioClip> ();
+	private List<int> audioQueue = new List<int> ();
 
 	private AudioSource source;
 
@@ -51,15 +64,25 @@ public class LevelView : MonoBehaviour, ILevelView
 		audioList.Add (censoredBeep);
 		audioList.Add (beepPing);
 		audioList.Add (success);
+		audioList.Add (ballAufnehmen);
+		audioList.Add (ballWerfen);
+		audioList.Add (bitteAufstehen);
+		audioList.Add (biiteHinsetzen);
 
 		scoreText.text = "0/0";
 		timeText.text = "Zeit: 0s";
+
+		StartCoroutine (audioQueueProcessor ());
 	}
 
 	public void playSound (int sound)
 	{
 		if (model.isSoundActivated) {
-			source.PlayOneShot (audioList [sound]);
+			if (source.isPlaying) {
+				audioQueue.Add (sound);
+			} else {
+				source.PlayOneShot (audioList [sound]);
+			}
 		}
 	}
 
@@ -116,6 +139,16 @@ public class LevelView : MonoBehaviour, ILevelView
 		}
 	}
 
+	public void playerNotSitting ()
+	{
+		StartCoroutine (forcePlayerToSit ());
+	}
+
+	public void playerNotStanding ()
+	{
+		StartCoroutine (forcePlayerToStand ());
+	}
+
 	IEnumerator startTimer ()
 	{
 		for (int i = 3; i > 0; i--) {
@@ -156,5 +189,42 @@ public class LevelView : MonoBehaviour, ILevelView
 				levelController.notify ("time.up");
 			}
 		}
+	}
+
+	IEnumerator audioQueueProcessor ()
+	{
+		while (true) {
+			yield return new WaitForSeconds (0.5f);
+
+			if (audioQueue.Count != 0 && source.isPlaying == false) {
+				int actualSound = audioQueue [0];
+				audioQueue.RemoveAt (0);
+				source.PlayOneShot (audioList [actualSound]);
+			}
+		}
+	}
+
+	IEnumerator forcePlayerToSit ()
+	{
+		playSound (7);
+		while (model.Posture != LevelModel.BodyPose.Sitting) {
+			yield return new WaitForSeconds (0.5f);
+		}
+
+		levelController.notify ("grab.ball");
+
+		yield return null;
+	}
+
+	IEnumerator forcePlayerToStand ()
+	{
+		playSound (6);
+		while (model.Posture != LevelModel.BodyPose.Standing) {
+			yield return new WaitForSeconds (0.5f);
+		}
+
+		levelController.notify ("throw.ball");
+
+		yield return null;
 	}
 }
