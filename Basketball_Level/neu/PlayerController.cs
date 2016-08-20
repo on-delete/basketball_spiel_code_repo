@@ -5,12 +5,14 @@ public class PlayerController
 {
 
 	private IPlayerView playerView;
+	private LevelModel model;
 
 	private bool isPisaFound;
 	private bool isFreezingDtected;
 
-	public PlayerController (PlayerView view)
+	public PlayerController (PlayerView view, LevelModel newModel)
 	{
+		model = newModel;
 		playerView = view;
 		isPisaFound = false;
 		isFreezingDtected = false;
@@ -19,7 +21,11 @@ public class PlayerController
 	public void PisaPostureFound ()
 	{
 		if (!isPisaFound) {
-			/*TODO: playerView.playSound ();*/
+			if (model.Posture == LevelModel.BodyPose.Sitting) {
+				playerView.playSound (0);
+			} else {
+				playerView.playSound (1);
+			}
 			playerView.setMeshColorFailure ();
 			isPisaFound = true;
 		}
@@ -28,7 +34,7 @@ public class PlayerController
 	public void PisaPostureCorrected ()
 	{
 		if (isPisaFound) {
-			/*TODO: playerView.stopSound ();*/
+			playerView.stopSound ();
 			playerView.setMeshColorCorrected ();
 			isPisaFound = false;
 		}
@@ -37,7 +43,7 @@ public class PlayerController
 	public void FreezingDetected ()
 	{
 		if (!isFreezingDtected) {
-			/*TODO: playerView.playSound ();*/
+			playerView.playSound (2);
 			isFreezingDtected = true;
 		}
 	}
@@ -45,7 +51,7 @@ public class PlayerController
 	public void FreezingCorrected ()
 	{
 		if (isFreezingDtected) {
-			/*TODO: playerView.stopSound ();*/
+			playerView.stopSound ();
 			isFreezingDtected = false;
 		}
 	}

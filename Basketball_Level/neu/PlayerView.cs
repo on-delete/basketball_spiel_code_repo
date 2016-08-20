@@ -10,6 +10,13 @@ public class PlayerView : MonoBehaviour, IPlayerView
 	private static Color32 green = new Color32 (0, 180, 0, 255);
 	private static Color32 white = new Color32 (255, 255, 255, 255);
 
+	public AudioClip geradeHinsetzen;
+	//0
+	public AudioClip geradeStehen;
+	//1
+	public AudioClip freezingMusic;
+	//2
+
 	List<AudioClip> audioList = new List<AudioClip> ();
 	private List<int> audioQueue = new List<int> ();
 
@@ -17,6 +24,10 @@ public class PlayerView : MonoBehaviour, IPlayerView
 
 	void Start ()
 	{
+		audioList.Add (geradeHinsetzen);
+		audioList.Add (geradeStehen);
+		audioList.Add (freezingMusic);
+
 		worksuitMeshMaterial = GameObject.FindWithTag ("playerMesh").GetComponent<SkinnedMeshRenderer> ().material;
 		source = GetComponent<AudioSource> ();
 

@@ -67,7 +67,7 @@ public class LevelController2 : ScriptableObject
 			{
 				++attempts;
 				model.lStatus = LevelModel.LevelStatus.GrabBall;
-				string scoreText = countHits + "/" + attempts;
+				string scoreText = "Treffer/Versuche: " + countHits + "/" + attempts;
 				levelView.setScoreText (scoreText);
 				notify ("grab.ball");
 				break;

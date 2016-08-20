@@ -34,9 +34,11 @@ public class App : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		playerController = new PlayerController (playerView);
-
 		levelModel = new LevelModel ();
+
+		playerController = new PlayerController (playerView, levelModel);
+
+
 		levelController = ScriptableObject.CreateInstance<LevelController2> ();
 		levelController.init (levelModel, levelView);
 

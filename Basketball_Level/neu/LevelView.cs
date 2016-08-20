@@ -69,7 +69,7 @@ public class LevelView : MonoBehaviour, ILevelView
 		audioList.Add (bitteAufstehen);
 		audioList.Add (biiteHinsetzen);
 
-		scoreText.text = "0/0";
+		scoreText.text = "Treffer/Versuche: 0/0";
 		timeText.text = "Zeit: 0s";
 
 		StartCoroutine (audioQueueProcessor ());
