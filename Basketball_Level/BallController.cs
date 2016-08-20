@@ -5,6 +5,7 @@ public class BallController : MonoBehaviour
 {
 
 	private LevelController levelController;
+	private LevelModel model;
 	private Coroutine destroyCoroutine;
 	private SphereCollider ballCollider;
 
@@ -33,62 +34,55 @@ public class BallController : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
+		levelController = GameObject.Find ("App").GetComponent<App> ().LevelController;
+		model = GameObject.Find ("App").GetComponent<App> ().LevelModel;
 		ballTriggered = false;
 		ballFlying = false;
 		destroyCoroutine = null;
 		ballCollider = GetComponent<SphereCollider> ();
 	}
-	
+
 	// Update is called once per frame
 	void Update ()
 	{
-		if (levelController != null) {
-			if (ballTriggered) {
-				Vector3 handPosition;
+		if (ballTriggered) {
+			Vector3 handPosition;
 
-				if (levelController.BallPosition == LevelController.ObjectPosition.Left) {
-					handPosition = GameObject.FindGameObjectWithTag ("leftHand").transform.position;
-				} else {
-					handPosition = GameObject.FindGameObjectWithTag ("rightHand").transform.position;
-				}
-		
-				float radius = Mathf.Max (ballCollider.transform.lossyScale.x, ballCollider.transform.lossyScale.x, ballCollider.transform.lossyScale.x) * ballCollider.radius;
-
-				transform.position = new Vector3 (handPosition.x, handPosition.y - radius, handPosition.z);
+			if (model.BallPosition == LevelModel.ObjectPosition.Left) {
+				handPosition = GameObject.FindGameObjectWithTag ("leftHand").transform.position;
+			} else {
+				handPosition = GameObject.FindGameObjectWithTag ("rightHand").transform.position;
 			}
 
-			if (ballFlying) {
-				if (destroyCoroutine == null) {
-					levelController.isBallGrabbed = false;
-					destroyCoroutine = StartCoroutine (destroyRoutine ());
-				}
+			float radius = Mathf.Max (ballCollider.transform.lossyScale.x, ballCollider.transform.lossyScale.x, ballCollider.transform.lossyScale.x) * ballCollider.radius;
+
+			transform.position = new Vector3 (handPosition.x, handPosition.y - radius, handPosition.z);
+		}
+
+		if (ballFlying) {
+			if (destroyCoroutine == null) {
+				destroyCoroutine = StartCoroutine (destroyRoutine ());
 			}
-		} else {
-			levelController = LevelController.Instance;
 		}
 	}
 
 	void OnTriggerEnter (Collider other)
 	{
 		if (!ballFlying) {
-			if (levelController != null) {
-				if (levelController.BallPosition == LevelController.ObjectPosition.Left) {
-					if (other.tag == "leftHand") {
-						levelController.isBallGrabbed = true;
-						ballTriggered = true;
-					}
-				} else {
-					if (other.tag == "rightHand") {
-						levelController.isBallGrabbed = true;
-						ballTriggered = true;
-					}
+			if (model.BallPosition == LevelModel.ObjectPosition.Left) {
+				if (other.tag == "leftHand") {
+					levelController.notify ("throw.ball");
+					ballTriggered = true;
 				}
 			} else {
-				levelController = LevelController.Instance;
+				if (other.tag == "rightHand") {
+					levelController.notify ("throw.ball");
+					ballTriggered = true;
+				}
 			}
 		} else {
 			if (other.tag == "target") {
-				levelController.BallHitTarget = true;
+				levelController.notify ("ball.hit.target");
 				Debug.Log ("Treffer!");
 			}
 		}
@@ -97,7 +91,7 @@ public class BallController : MonoBehaviour
 	IEnumerator destroyRoutine ()
 	{
 		yield return new WaitForSeconds (2.5f);
-		levelController.isBallThrown = true;
+		levelController.notify ("ball.throw.complete");
 		Destroy (gameObject);
 	}
 }

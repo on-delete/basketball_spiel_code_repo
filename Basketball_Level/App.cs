@@ -6,11 +6,11 @@ public class App : MonoBehaviour
 
 	public LevelView levelView;
 	public PlayerView playerView;
-	public BodyAnalyzer2 bodyAnalyzer;
+	public BodyAnalyzer bodyAnalyzer;
 	public OptionGUI optionGui;
 
 	private PlayerController playerController;
-	private LevelController2 levelController;
+	private LevelController levelController;
 	private LevelModel levelModel;
 
 	public PlayerController PlayerController {
@@ -19,7 +19,7 @@ public class App : MonoBehaviour
 		}
 	}
 
-	public LevelController2 LevelController2 {
+	public LevelController LevelController {
 		get {
 			return levelController;
 		}
@@ -39,7 +39,7 @@ public class App : MonoBehaviour
 		playerController = new PlayerController (playerView, levelModel);
 
 
-		levelController = ScriptableObject.CreateInstance<LevelController2> ();
+		levelController = ScriptableObject.CreateInstance<LevelController> ();
 		levelController.init (levelModel, levelView);
 
 		optionGui.SetModel = levelModel;

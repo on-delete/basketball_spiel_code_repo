@@ -4,10 +4,10 @@ using System.Collections.Generic;
 
 public class LevelView : MonoBehaviour, ILevelView
 {
-	private LevelController2 levelController;
+	private LevelController levelController;
 	private LevelModel model;
 
-	public LevelController2 SetLevelController {
+	public LevelController SetLevelController {
 		set {
 			levelController = value;
 		}

@@ -7,23 +7,45 @@ using CircularBuffer;
 public class BodyAnalyzer : MonoBehaviour
 {
 
-	protected static BodyAnalyzer instance = null;
-	private KinectManager kinectManager;
+	public GameObject app;
+	private LevelModel model;
 	private LevelController levelController;
+	private PlayerController playerController;
+	private LevelView levelView;
+
+	public LevelModel SetModel {
+		set {
+			model = value;
+		}
+	}
+
+	public LevelController SetLevelController {
+		set {
+			levelController = value;
+		}
+	}
+
+	public PlayerController SetPlayerController {
+		set {
+			playerController = value;
+		}
+	}
+
+	public LevelView SetLevelView {
+		set {
+			levelView = value;
+		}
+	}
+
+	private KinectManager kinectManager;
 
 	private Dictionary<string, Vector3> bodyJoints = new Dictionary<string, Vector3> ();
 
 	private KinectInterop.HandState lastLeftHandState;
 	private KinectInterop.HandState lastRightHandState;
-	private BodyPose lastPosture;
+	private LevelModel.BodyPose lastPosture;
 	private int isThrown;
 	private float throwAngle = Mathf.PI / 3;
-
-	private static Color32 red = new Color32 (180, 0, 0, 255);
-	private static Color32 green = new Color32 (0, 180, 0, 255);
-	private static Color32 white = new Color32 (255, 255, 255, 255);
-	private Material worksuitMeshMaterial;
-	private Coroutine resetTimerRoutine = null;
 
 	private Vector3 currentHandPosition;
 	private Vector3 lastHandPosition = new Vector3 (9999, 9999, 9999);
@@ -31,34 +53,13 @@ public class BodyAnalyzer : MonoBehaviour
 	private float minThrowVelocity = 0.5f;
 	private List<float> velocityList = new List<float> ();
 
-	private LevelController.LevelStatus lStatus;
-	private LevelController.ObjectPosition ballPosition;
+	private LevelModel.LevelStatus lStatus;
+	private LevelModel.ObjectPosition ballPosition;
 	private int playerLevel;
 
 	private float lastDistanceHandToTarget;
 
 	private Coroutine freezingRoutine;
-
-	public static BodyAnalyzer Instance {
-		get {
-			return instance;
-		}
-	}
-
-	private BodyPose posture;
-
-	public BodyPose Posture {
-		get {
-			return posture;
-		}
-	}
-
-	public enum BodyPose
-	{
-		Unknown = 0,
-		Sitting,
-		Standing,
-	}
 
 	private PostureSatus lastPostureStatus;
 
@@ -71,10 +72,8 @@ public class BodyAnalyzer : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		instance = this;
 		isThrown = 0;
-		worksuitMeshMaterial = GameObject.FindWithTag ("playerMesh").GetComponent<SkinnedMeshRenderer> ().material;
-		lastPosture = BodyPose.Unknown;
+		lastPosture = LevelModel.BodyPose.Unknown;
 	}
 
 	// Update is called once per frame
@@ -82,95 +81,98 @@ public class BodyAnalyzer : MonoBehaviour
 	{
 		if (kinectManager == null) {
 			kinectManager = KinectManager.Instance;
-		} else if (levelController == null) {
-			levelController = LevelController.Instance;
-		} else {
+		}/* else if (model == null) {
+			model = app.GetComponent<App> ().LevelModel;
+		}*/ else {
 			if (kinectManager.GetUsersCount () > 0) {
 				long userId = kinectManager.GetAllUserIds () [0];
-				lStatus = levelController.lStatus;
-				ballPosition = levelController.BallPosition;
-				playerLevel = levelController.PlayerLevel;
+				lStatus = model.lStatus;
+				ballPosition = model.BallPosition;
+				playerLevel = model.PlayerLevel;
 
 				getBodyJoints (userId);
 
-				posture = getLastPosture (bodyJoints ["hipLeftPos"], bodyJoints ["hipRightPos"], bodyJoints ["kneeLeftPos"], bodyJoints ["kneeRightPos"], bodyJoints ["footLeftPos"], bodyJoints ["footRightPos"], bodyJoints ["shoulderLeftPos"], bodyJoints ["shoulderRightPos"]);
-				if (posture != BodyPose.Unknown) {
-					lastPosture = posture;
+				model.Posture = getLastPosture (bodyJoints ["hipLeftPos"], bodyJoints ["hipRightPos"], bodyJoints ["kneeLeftPos"], bodyJoints ["kneeRightPos"], bodyJoints ["footLeftPos"], bodyJoints ["footRightPos"], bodyJoints ["shoulderLeftPos"], bodyJoints ["shoulderRightPos"]);
+				if (model.Posture != LevelModel.BodyPose.Unknown) {
+					lastPosture = model.Posture;
 				}
 
-				if (lStatus == LevelController.LevelStatus.GrabBall || lStatus == LevelController.LevelStatus.ThrowBall) {
-					if (freezingRoutine == null) {
-						freezingRoutine = StartCoroutine (checkFreezing ());
+				if (lStatus == LevelModel.LevelStatus.WaitForStartGesture) {
+					if (isStartGestureDetected (userId)) {
+						levelController.notify ("start.gesture.detected");
 					}
 				} else {
-					if (freezingRoutine != null) {
-						StopCoroutine (freezingRoutine);
-						freezingRoutine = null;
-					}
-				}
-
-				int progress = 0;
-				if (lStatus == LevelController.LevelStatus.GrabBall) {
-					progress = calculateProgress ();
-				}
-
-				if (lStatus != LevelController.LevelStatus.None && lStatus != LevelController.LevelStatus.LevelFinished && posture == BodyPose.Sitting && progress == 0) {
-					checkPisaPosture (calculateDriftAngleToSight (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]), calculateDriftAngleToFrontAndBack (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]));
-				}
-					
-				if (lStatus == LevelController.LevelStatus.ThrowBall) {
-					if (playerLevel == 1) {
-						if (posture == BodyPose.Sitting) {
-							calculateBallVelocity ();
+					if (lStatus == LevelModel.LevelStatus.GrabBall || lStatus == LevelModel.LevelStatus.ThrowBall) {
+						if (freezingRoutine == null) {
+							freezingRoutine = StartCoroutine (checkFreezing ());
 						}
 					} else {
-						if (posture == BodyPose.Standing) {
-							calculateBallVelocity ();
+						if (freezingRoutine != null) {
+							StopCoroutine (freezingRoutine);
+							freezingRoutine = null;
 						}
 					}
 
+					int progress = 0;
+					if (lStatus == LevelModel.LevelStatus.GrabBall) {
+						progress = calculateProgress ();
+					}
+
+					if (lStatus != LevelModel.LevelStatus.None && lStatus != LevelModel.LevelStatus.LevelFinished && model.Posture == LevelModel.BodyPose.Sitting && progress == 0) {
+						checkPisaPosture (calculateDriftAngleToSight (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]), calculateDriftAngleToFrontAndBack (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]));
+					}
+
+					if (lStatus == LevelModel.LevelStatus.ThrowBall) {
+						/*if (playerLevel == 1) {
+							if (model.Posture == LevelModel.BodyPose.Sitting) {
+								calculateBallVelocity ();
+							}
+						} else {
+							if (model.Posture == LevelModel.BodyPose.Standing) {
+								calculateBallVelocity ();
+							}
+						}*/
+						calculateBallVelocity ();
+					}
 				}
 			}
 		}
 	}
 
-	public bool isStartGestureDetected ()
+	public bool isStartGestureDetected (long userId)
 	{
-		if (kinectManager != null && kinectManager.GetUsersCount () > 0) {
-			long userId = kinectManager.GetPrimaryUserID ();
 
-			KinectInterop.HandState rightHandState = kinectManager.GetRightHandState (userId);
-			KinectInterop.HandState leftHandState = kinectManager.GetLeftHandState (userId);
+		KinectInterop.HandState rightHandState = kinectManager.GetRightHandState (userId);
+		KinectInterop.HandState leftHandState = kinectManager.GetLeftHandState (userId);
 
-			if (rightHandState != KinectInterop.HandState.NotTracked ||
-			    rightHandState != KinectInterop.HandState.Unknown ||
-			    leftHandState != KinectInterop.HandState.NotTracked ||
-			    leftHandState != KinectInterop.HandState.Unknown) {
-				if (lastLeftHandState == KinectInterop.HandState.Unknown) {
-					if (leftHandState == KinectInterop.HandState.Open) {
-						lastLeftHandState = KinectInterop.HandState.Open;
-						return false;
-					}
-				} else if (lastLeftHandState == KinectInterop.HandState.Open) {
-					if (leftHandState == KinectInterop.HandState.Closed) {
-						lastLeftHandState = KinectInterop.HandState.Closed;
-						return true;
-					}
+		if (rightHandState != KinectInterop.HandState.NotTracked ||
+		    rightHandState != KinectInterop.HandState.Unknown ||
+		    leftHandState != KinectInterop.HandState.NotTracked ||
+		    leftHandState != KinectInterop.HandState.Unknown) {
+			if (lastLeftHandState == KinectInterop.HandState.Unknown) {
+				if (leftHandState == KinectInterop.HandState.Open) {
+					lastLeftHandState = KinectInterop.HandState.Open;
+					return false;
 				}
-				if (lastRightHandState == KinectInterop.HandState.Unknown) {
-					if (rightHandState == KinectInterop.HandState.Open) {
-						lastRightHandState = KinectInterop.HandState.Open;
-						return false;
-					}
-				} else if (lastRightHandState == KinectInterop.HandState.Open) {
-					if (rightHandState == KinectInterop.HandState.Closed) {
-						lastRightHandState = KinectInterop.HandState.Closed;
-						return true;
-					}
+			} else if (lastLeftHandState == KinectInterop.HandState.Open) {
+				if (leftHandState == KinectInterop.HandState.Closed) {
+					lastLeftHandState = KinectInterop.HandState.Closed;
+					return true;
 				}
-			} else {
-				return false;
 			}
+			if (lastRightHandState == KinectInterop.HandState.Unknown) {
+				if (rightHandState == KinectInterop.HandState.Open) {
+					lastRightHandState = KinectInterop.HandState.Open;
+					return false;
+				}
+			} else if (lastRightHandState == KinectInterop.HandState.Open) {
+				if (rightHandState == KinectInterop.HandState.Closed) {
+					lastRightHandState = KinectInterop.HandState.Closed;
+					return true;
+				}
+			}
+		} else {
+			return false;
 		}
 
 		return false;
@@ -207,7 +209,7 @@ public class BodyAnalyzer : MonoBehaviour
 			Vector3 shoulderPos;
 			Vector3 elbowPos;
 
-			if (ballPosition == LevelController.ObjectPosition.Left) {
+			if (ballPosition == LevelModel.ObjectPosition.Left) {
 				shoulderPos = bodyJoints ["shoulderLeftPos"];
 				elbowPos = bodyJoints ["elbowLeftPos"];
 				currentHandPosition = bodyJoints ["handLeftPos"];
@@ -228,7 +230,7 @@ public class BodyAnalyzer : MonoBehaviour
 				if (currentHandPosition.y > lastHandPosition.y && currentHandPosition.z < lastHandPosition.z) {
 
 					float handVelocity = (currentHandPosition.y - lastHandPosition.y) / Time.deltaTime;
-					//Debug.Log ("Test: " + handVelocity);
+					Debug.Log ("Test: " + handVelocity);
 					if (handVelocity > minThrowVelocity && handVelocity < 10) {
 						velocityList.Add (handVelocity);
 						isThrown = 1;
@@ -283,20 +285,18 @@ public class BodyAnalyzer : MonoBehaviour
 
 	private void checkPisaPosture (decimal driftAngleSight, decimal driftAngleFrontBack)
 	{
-		//Debug.Log ("driftAngleSight: " + driftAngleSight + " driftAngleFrontB: " + driftAngleFrontBack);
 		if (driftAngleSight > 10 || driftAngleSight < -10 || driftAngleFrontBack > 10 || driftAngleFrontBack < -10) {
 			if (lastPostureStatus == PostureSatus.postureCorrect) {
-				//Debug.Log ("Neigung zu groß!");
+				Debug.Log ("Neigung zu groß!");
 				lastPostureStatus = PostureSatus.postureFail;
-				setWorksuitMeshGlowEffect ();
-				//audios [1].Play ();
+				playerController.PisaPostureFound ();
 
 			}
 		} else if (driftAngleSight <= 10 && driftAngleSight >= -10 && driftAngleFrontBack <= 10 && driftAngleFrontBack >= -10) {
 			if (lastPostureStatus == PostureSatus.postureFail) {
-				//Debug.Log ("Gute Position!");
+				Debug.Log ("Gute Position!");
 				lastPostureStatus = PostureSatus.postureCorrect;
-				setWorksuitMeshGlowEffect ();
+				playerController.PisaPostureCorrected ();
 			}
 		}
 	}
@@ -316,43 +316,6 @@ public class BodyAnalyzer : MonoBehaviour
 	private float calculateArcTan (float p1_1, float p1_2, float p2_1, float p2_2)
 	{
 		return Mathf.Atan ((p2_1 - p1_1) / (p2_2 - p1_2));
-	}
-
-	private void setWorksuitMeshGlowEffect ()
-	{
-		if (lastPostureStatus == PostureSatus.postureFail) {
-			worksuitMeshMaterial.SetColor ("_MKGlowColor", red);
-			worksuitMeshMaterial.SetFloat ("_MKGlowPower", 0.15f);
-			worksuitMeshMaterial.SetColor ("_MKGlowTexColor", red);
-			worksuitMeshMaterial.SetFloat ("_MKGlowTexStrength", 1.68f);
-			if (resetTimerRoutine != null) {
-				StopCoroutine (resetTimerRoutine);
-				resetTimerRoutine = null;
-			}
-		} else {
-			worksuitMeshMaterial.SetColor ("_MKGlowColor", green);
-			worksuitMeshMaterial.SetFloat ("_MKGlowPower", 0.15f);
-			worksuitMeshMaterial.SetColor ("_MKGlowTexColor", green);
-			worksuitMeshMaterial.SetFloat ("_MKGlowTexStrength", 1.68f);
-			resetTimerRoutine = StartCoroutine (resetWorksuitGlowEffectTimer ());
-		}
-	}
-
-	private void resetWorksuitMeshGlowEffect ()
-	{
-		worksuitMeshMaterial.SetColor ("_MKGlowColor", white);
-		worksuitMeshMaterial.SetFloat ("_MKGlowPower", 0.0f);
-		worksuitMeshMaterial.SetColor ("_MKGlowTexColor", white);
-		worksuitMeshMaterial.SetInt ("_MKGlowTexStrength", 0);
-	}
-
-	IEnumerator resetWorksuitGlowEffectTimer ()
-	{
-		yield return new WaitForSeconds (3);
-
-		resetWorksuitMeshGlowEffect ();
-
-		yield return null;
 	}
 
 	private Vector3 calculateBestThrowSpeed (Vector3 origin, Vector3 target, float timeToTarget)
@@ -387,7 +350,7 @@ public class BodyAnalyzer : MonoBehaviour
 		return kinectManager.GetJointPosition (userId, kinectManager.GetJointIndex (jointType));
 	}
 
-	private BodyPose getLastPosture (Vector3 hipsLeftPos, Vector3 hipsRightPos, Vector3 kneeLeftPos, Vector3 kneeRightPos, Vector3 footLeftPos, Vector3 footRightPos, Vector3 shoulderLeftPos, Vector3 shoulderRightPos)
+	private LevelModel.BodyPose getLastPosture (Vector3 hipsLeftPos, Vector3 hipsRightPos, Vector3 kneeLeftPos, Vector3 kneeRightPos, Vector3 footLeftPos, Vector3 footRightPos, Vector3 shoulderLeftPos, Vector3 shoulderRightPos)
 	{
 		decimal leftLegAngle = calculate3PointAngle (hipsLeftPos, kneeLeftPos, footLeftPos);
 		decimal rightLegAngle = calculate3PointAngle (hipsRightPos, kneeRightPos, footRightPos);
@@ -400,14 +363,14 @@ public class BodyAnalyzer : MonoBehaviour
 
 		if ((leftLegAngle > 140 && leftLegAngle < 180) || (rightLegAngle > 140 && rightLegAngle < 180)) {
 			if (leftBodyAngle > 120 || rightBodyAngle > 120) {
-				return BodyPose.Standing;
+				return LevelModel.BodyPose.Standing;
 			} else {
-				return BodyPose.Unknown;
+				return LevelModel.BodyPose.Unknown;
 			}
 		} else if ((leftLegAngle < 100 && leftLegAngle > 20) || (rightLegAngle < 100 && rightLegAngle > 20)) {
-			return BodyPose.Sitting;
+			return LevelModel.BodyPose.Sitting;
 		} else {
-			return BodyPose.Unknown;
+			return LevelModel.BodyPose.Unknown;
 		}
 	}
 
@@ -442,7 +405,7 @@ public class BodyAnalyzer : MonoBehaviour
 		if (ball != null) {
 			Vector3 targetPosition = ball.transform.position;
 			Vector3 handPosition;
-			if (ballPosition == LevelController.ObjectPosition.Left) {
+			if (ballPosition == LevelModel.ObjectPosition.Left) {
 				handPosition = GameObject.FindGameObjectWithTag ("leftHand").transform.position;
 			} else {
 				handPosition = GameObject.FindGameObjectWithTag ("rightHand").transform.position;
@@ -568,8 +531,10 @@ public class BodyAnalyzer : MonoBehaviour
 				}
 
 				if (leftHandFreezed && rightHandFreezed) {
+					playerController.FreezingDetected ();
 					Debug.Log ("Freezing!");
 				} else {
+					playerController.FreezingCorrected ();
 					Debug.Log ("Kein Freezing!");
 				}
 
