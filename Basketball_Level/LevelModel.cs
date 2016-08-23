@@ -74,13 +74,10 @@ public class LevelModel
 
 	public enum LevelStatus
 	{
-		None = 0,
 		WaitForStartGesture,
 		GrabBall,
 		ThrowBall,
-		ThrowComplete,
 		LevelFinished,
-		TimeUp,
 	};
 
 	private int playerLevel;

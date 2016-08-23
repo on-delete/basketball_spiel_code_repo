@@ -4,10 +4,10 @@ using System.Collections.Generic;
 
 public class LevelView : MonoBehaviour, ILevelView
 {
-	private LevelController levelController;
+	private ILevelController levelController;
 	private LevelModel model;
 
-	public LevelController SetLevelController {
+	public ILevelController SetLevelController {
 		set {
 			levelController = value;
 		}
@@ -111,7 +111,7 @@ public class LevelView : MonoBehaviour, ILevelView
 	{
 		leftBasket.SetActive (false);
 		rightBasket.SetActive (true);
-		Instantiate (basketballPrefab, new Vector3 (0.24f, 0.52f, 2.21f), Quaternion.Euler (0.0f, 0.0f, 0.0f));
+		Instantiate (basketballPrefab, new Vector3 (0.24f, 0.52f, 2.5f), Quaternion.Euler (0.0f, 0.0f, 0.0f));
 		model.BallPosition = LevelModel.ObjectPosition.Right;
 	}
 
@@ -119,7 +119,7 @@ public class LevelView : MonoBehaviour, ILevelView
 	{
 		leftBasket.SetActive (true);
 		rightBasket.SetActive (false);
-		Instantiate (basketballPrefab, new Vector3 (-0.24f, 0.52f, 2.21f), Quaternion.Euler (0.0f, 0.0f, 0.0f));
+		Instantiate (basketballPrefab, new Vector3 (-0.24f, 0.52f, 2.5f), Quaternion.Euler (0.0f, 0.0f, 0.0f));
 		model.BallPosition = LevelModel.ObjectPosition.Left;
 	}
 

@@ -4,7 +4,7 @@ using System.Collections;
 public class BallController : MonoBehaviour
 {
 
-	private LevelController levelController;
+	private ILevelController levelController;
 	private LevelModel model;
 	private Coroutine destroyCoroutine;
 	private SphereCollider ballCollider;

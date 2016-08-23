@@ -50,6 +50,5 @@ public class App : MonoBehaviour
 		bodyAnalyzer.SetLevelController = levelController;
 		bodyAnalyzer.SetModel = levelModel;
 		bodyAnalyzer.SetPlayerController = playerController;
-		bodyAnalyzer.SetLevelView = levelView;
 	}
 }

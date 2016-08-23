@@ -2,7 +2,7 @@
 using System.Collections;
 using System;
 
-public class LevelController : ScriptableObject
+public class LevelController : ScriptableObject, ILevelController
 {
 
 	private LevelModel model;

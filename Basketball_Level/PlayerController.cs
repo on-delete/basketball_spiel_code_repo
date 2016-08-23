@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PlayerController
+public class PlayerController : IPlayerController
 {
 
 	private IPlayerView playerView;

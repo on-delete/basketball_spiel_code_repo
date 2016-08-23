@@ -23,17 +23,10 @@ public class OptionGUI : MonoBehaviour
 
 	private LevelModel model;
 
-	private Scene scene;
-
 	public LevelModel SetModel {
 		set {
 			model = value;
 		}
-	}
-
-	void Start ()
-	{
-		scene = SceneManager.GetActiveScene ();
 	}
 
 	private void ShowGuiWindow (int windowID)
@@ -47,7 +40,6 @@ public class OptionGUI : MonoBehaviour
 
 		selected = GUILayout.SelectionGrid (selected, options, 1);
 		model.PlayerLevel = selected + 1;
-		Debug.Log ("PlayerLevel: " + model.PlayerLevel);
 
 		GUILayout.Space (10);
 

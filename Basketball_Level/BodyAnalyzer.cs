@@ -9,9 +9,8 @@ public class BodyAnalyzer : MonoBehaviour
 
 	public GameObject app;
 	private LevelModel model;
-	private LevelController levelController;
-	private PlayerController playerController;
-	private LevelView levelView;
+	private ILevelController levelController;
+	private IPlayerController playerController;
 
 	public LevelModel SetModel {
 		set {
@@ -19,21 +18,15 @@ public class BodyAnalyzer : MonoBehaviour
 		}
 	}
 
-	public LevelController SetLevelController {
+	public ILevelController SetLevelController {
 		set {
 			levelController = value;
 		}
 	}
 
-	public PlayerController SetPlayerController {
+	public IPlayerController SetPlayerController {
 		set {
 			playerController = value;
-		}
-	}
-
-	public LevelView SetLevelView {
-		set {
-			levelView = value;
 		}
 	}
 
@@ -55,7 +48,6 @@ public class BodyAnalyzer : MonoBehaviour
 
 	private LevelModel.LevelStatus lStatus;
 	private LevelModel.ObjectPosition ballPosition;
-	private int playerLevel;
 
 	private float lastDistanceHandToTarget;
 
@@ -88,7 +80,6 @@ public class BodyAnalyzer : MonoBehaviour
 				long userId = kinectManager.GetAllUserIds () [0];
 				lStatus = model.lStatus;
 				ballPosition = model.BallPosition;
-				playerLevel = model.PlayerLevel;
 
 				getBodyJoints (userId);
 
@@ -118,20 +109,11 @@ public class BodyAnalyzer : MonoBehaviour
 						progress = calculateProgress ();
 					}
 
-					if (lStatus != LevelModel.LevelStatus.None && lStatus != LevelModel.LevelStatus.LevelFinished && model.Posture == LevelModel.BodyPose.Sitting && progress == 0) {
-						checkPisaPosture (calculateDriftAngleToSight (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]), calculateDriftAngleToFrontAndBack (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]));
-					}
+					//if (lStatus != LevelModel.LevelStatus.None && lStatus != LevelModel.LevelStatus.LevelFinished && model.Posture == LevelModel.BodyPose.Sitting && progress == 0) {
+					checkPisaPosture (calculateDriftAngleToSight (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]), calculateDriftAngleToFrontAndBack (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]));
+					//}
 
 					if (lStatus == LevelModel.LevelStatus.ThrowBall) {
-						/*if (playerLevel == 1) {
-							if (model.Posture == LevelModel.BodyPose.Sitting) {
-								calculateBallVelocity ();
-							}
-						} else {
-							if (model.Posture == LevelModel.BodyPose.Standing) {
-								calculateBallVelocity ();
-							}
-						}*/
 						calculateBallVelocity ();
 					}
 				}
@@ -285,14 +267,14 @@ public class BodyAnalyzer : MonoBehaviour
 
 	private void checkPisaPosture (decimal driftAngleSight, decimal driftAngleFrontBack)
 	{
-		if (driftAngleSight > 10 || driftAngleSight < -10 || driftAngleFrontBack > 10 || driftAngleFrontBack < -10) {
+		if (driftAngleSight > 10 || driftAngleSight < -10 || driftAngleFrontBack > 10  /*|| driftAngleFrontBack < -10*/) {
 			if (lastPostureStatus == PostureSatus.postureCorrect) {
 				Debug.Log ("Neigung zu groß!");
 				lastPostureStatus = PostureSatus.postureFail;
 				playerController.PisaPostureFound ();
 
 			}
-		} else if (driftAngleSight <= 10 && driftAngleSight >= -10 && driftAngleFrontBack <= 10 && driftAngleFrontBack >= -10) {
+		} else if (driftAngleSight <= 10 && driftAngleSight >= -10 && driftAngleFrontBack <= 10 /*&& driftAngleFrontBack >= -10*/) {
 			if (lastPostureStatus == PostureSatus.postureFail) {
 				Debug.Log ("Gute Position!");
 				lastPostureStatus = PostureSatus.postureCorrect;
