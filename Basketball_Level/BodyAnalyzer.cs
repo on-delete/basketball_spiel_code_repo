@@ -121,7 +121,7 @@ public class BodyAnalyzer : MonoBehaviour
 		}
 	}
 
-	public bool isStartGestureDetected (long userId)
+	private bool isStartGestureDetected (long userId)
 	{
 
 		KinectInterop.HandState rightHandState = kinectManager.GetRightHandState (userId);

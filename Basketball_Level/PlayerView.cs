@@ -17,7 +17,7 @@ public class PlayerView : MonoBehaviour, IPlayerView
 	public AudioClip freezingMusic;
 	//2
 
-	List<AudioClip> audioList = new List<AudioClip> ();
+	private List<AudioClip> audioList = new List<AudioClip> ();
 	private List<int> audioQueue = new List<int> ();
 
 	private AudioSource source;
