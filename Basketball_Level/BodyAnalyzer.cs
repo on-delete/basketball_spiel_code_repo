@@ -221,7 +221,7 @@ public class BodyAnalyzer : MonoBehaviour
 				}
 
 				if (isThrown == 1) {
-					if (/*handVelocity < minThrowVelocity &&*/ calculateArmDrift (shoulderPos, elbowPos, currentHandPosition) > 150) {
+					if (calculateArmDrift (shoulderPos, elbowPos, currentHandPosition) > 150) {
 						isThrown = 2;
 					}
 				}
@@ -241,20 +241,24 @@ public class BodyAnalyzer : MonoBehaviour
 
 					float avgVelocity = velocityAddedValues / velocityList.Count;
 
-					Vector3 ballVelocity = new Vector3 (0, (avgVelocity * 2), (avgVelocity / Mathf.Tan (throwAngle)));
+					Vector3 bestthrowspeed = calculateBestThrowSpeed (new Vector3 (0, ball.transform.position.y, ball.transform.position.z), target.transform.position, 1.0f);
+
+					Debug.Log ("best speed: " + bestthrowspeed.y + " " + bestthrowspeed.z);
+					Debug.Log ("avgvelo: " + avgVelocity);
+
+					float percentageAvgToBestY = (100 * (avgVelocity * 2)) / bestthrowspeed.y;
+					float percentageAvgToBestZ = (100 * avgVelocity) / bestthrowspeed.z;
 
 					ball.GetComponent<BallController> ().BallTriggered = false;
 					ball.GetComponent<BallController> ().BallFlying = true;
 					ball.transform.position = new Vector3 (0, ball.transform.position.y, ball.transform.position.z);
-
-					Vector3 bestthrowspeed = calculateBestThrowSpeed (ball.transform.position, target.transform.position, 1.0f);
-					//Debug.Log ("isThrown: " + isThrown);
-					//Debug.Log ("Best throw speed: " + bestthrowspeed.x + " " + bestthrowspeed.y + " " + bestthrowspeed.z);
-					//Debug.Log ("caluclated velocity: " + ballVelocity.x + " " + ballVelocity.y + " " + ballVelocity.z);
-
 					ball.GetComponent<Rigidbody> ().useGravity = true;
-					ball.GetComponent<Rigidbody> ().velocity = ballVelocity;
-					//ball.GetComponent<Rigidbody> ().velocity = new Vector3 (0, bestthrowspeed.y, bestthrowspeed.z);
+
+					if ((percentageAvgToBestY <= 120 && percentageAvgToBestY >= 80) && (percentageAvgToBestZ <= 120 && percentageAvgToBestZ >= 80)) {
+						ball.GetComponent<Rigidbody> ().velocity = new Vector3 (0, bestthrowspeed.y, bestthrowspeed.z);
+					} else {
+						ball.GetComponent<Rigidbody> ().velocity = = new Vector3 (0, (avgVelocity * 2), (avgVelocity / Mathf.Tan (throwAngle)));
+					}
 
 					velocityList.Clear ();
 					lastHandPosition = new Vector3 (9999, 9999, 9999);
@@ -372,9 +376,6 @@ public class BodyAnalyzer : MonoBehaviour
 
 		float v1length = Vector3.Distance (p1, p2);
 		float v2length = Vector3.Distance (p3, p2);
-
-		//float v1length = Mathf.Sqrt (Mathf.Pow (v1.x, 2) + Mathf.Pow (v1.y, 2) + Mathf.Pow (v1.z, 2));
-		//float v2length = Mathf.Sqrt (Mathf.Pow (v2.x, 2) + Mathf.Pow (v2.y, 2) + Mathf.Pow (v2.z, 2));
 
 		return Math.Round ((decimal)(Mathf.Acos (skalar / (v1length * v2length)) * Mathf.Rad2Deg), 2);
 	}

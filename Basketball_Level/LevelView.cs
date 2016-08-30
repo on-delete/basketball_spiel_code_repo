@@ -111,7 +111,7 @@ public class LevelView : MonoBehaviour, ILevelView
 	{
 		leftBasket.SetActive (false);
 		rightBasket.SetActive (true);
-		Instantiate (basketballPrefab, new Vector3 (0.24f, 0.52f, 2.5f), Quaternion.Euler (0.0f, 0.0f, 0.0f));
+		Instantiate (basketballPrefab, new Vector3 (0.24f, 0.52f, 2.28f), Quaternion.Euler (0.0f, 0.0f, 0.0f));
 		model.BallPosition = LevelModel.ObjectPosition.Right;
 	}
 
@@ -119,7 +119,7 @@ public class LevelView : MonoBehaviour, ILevelView
 	{
 		leftBasket.SetActive (true);
 		rightBasket.SetActive (false);
-		Instantiate (basketballPrefab, new Vector3 (-0.24f, 0.52f, 2.5f), Quaternion.Euler (0.0f, 0.0f, 0.0f));
+		Instantiate (basketballPrefab, new Vector3 (-0.24f, 0.52f, 2.28f), Quaternion.Euler (0.0f, 0.0f, 0.0f));
 		model.BallPosition = LevelModel.ObjectPosition.Left;
 	}
 

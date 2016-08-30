@@ -35,7 +35,7 @@ public class OptionGUI : MonoBehaviour
 
 		GUILayout.Space (30);
 
-		isSoundActivated = GUILayout.Toggle (isSoundActivated, "Sounds activated");
+		isSoundActivated = GUILayout.Toggle (isSoundActivated, "Sounds aktivieren");
 		model.isSoundActivated = this.isSoundActivated;
 
 		selected = GUILayout.SelectionGrid (selected, options, 1);
@@ -50,7 +50,7 @@ public class OptionGUI : MonoBehaviour
 
 		GUILayout.Label (label1Text);
 
-		hideWindowClicked = GUILayout.Button ("Hide Options");
+		hideWindowClicked = GUILayout.Button ("Optionen ausblenden");
 		if (hideWindowClicked) {
 			//label2Text = "Hiding options window...";
 			HideWindow (hideWindowClicked);
