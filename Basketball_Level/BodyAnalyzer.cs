@@ -257,7 +257,7 @@ public class BodyAnalyzer : MonoBehaviour
 					if ((percentageAvgToBestY <= 120 && percentageAvgToBestY >= 80) && (percentageAvgToBestZ <= 120 && percentageAvgToBestZ >= 80)) {
 						ball.GetComponent<Rigidbody> ().velocity = new Vector3 (0, bestthrowspeed.y, bestthrowspeed.z);
 					} else {
-						ball.GetComponent<Rigidbody> ().velocity = = new Vector3 (0, (avgVelocity * 2), (avgVelocity / Mathf.Tan (throwAngle)));
+						ball.GetComponent<Rigidbody> ().velocity = new Vector3 (0, (avgVelocity * 2), (avgVelocity / Mathf.Tan (throwAngle)));
 					}
 
 					velocityList.Clear ();

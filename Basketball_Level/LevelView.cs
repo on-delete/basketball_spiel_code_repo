@@ -51,7 +51,7 @@ public class LevelView : MonoBehaviour, ILevelView
 	private AudioSource source;
 
 	private int time;
-	private int maxTime = 60;
+	private int maxTime = 10;
 
 	private Coroutine startTimerRoutine = null;
 	private Coroutine timerRoutine = null;
@@ -69,7 +69,7 @@ public class LevelView : MonoBehaviour, ILevelView
 		audioList.Add (bitteAufstehen);
 		audioList.Add (biiteHinsetzen);
 
-		scoreText.text = "Treffer/Versuche: 0/0";
+		scoreText.text = "Punkte: 0";
 		timeText.text = "Zeit: 0s";
 
 		StartCoroutine (audioQueueProcessor ());
@@ -136,6 +136,11 @@ public class LevelView : MonoBehaviour, ILevelView
 		if (timerRoutine != null) {
 			StopCoroutine (timerRoutine);
 			timerRoutine = null;
+		}
+
+		AudioSource[] allAudioSources = FindObjectsOfType (typeof(AudioSource)) as AudioSource[];
+		foreach (AudioSource audioS in allAudioSources) {
+			audioS.Stop ();
 		}
 	}
 

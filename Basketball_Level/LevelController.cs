@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System;
+using System.Linq;
+using System.Collections.Generic;
 
 public class LevelController : ScriptableObject, ILevelController
 {
@@ -12,6 +14,10 @@ public class LevelController : ScriptableObject, ILevelController
 
 	private int countHits;
 	private int attempts;
+	private bool hit = false;
+	private int hitsInRowCounter = 0;
+	private int pointsPerHit = 50;
+	private float endScore = 0;
 
 	public void init (LevelModel newModel, LevelView view)
 	{
@@ -66,8 +72,17 @@ public class LevelController : ScriptableObject, ILevelController
 		case "ball.throw.complete":
 			{
 				++attempts;
+				if (hit) {
+					if (hitsInRowCounter <= 5) {
+						hitsInRowCounter++;
+					}
+					endScore += pointsPerHit * Mathf.Pow (2, hitsInRowCounter);
+				} else {
+					hitsInRowCounter = 0;
+				}
+				hit = false;
 				model.lStatus = LevelModel.LevelStatus.GrabBall;
-				string scoreText = "Treffer/Versuche: " + countHits + "/" + attempts;
+				string scoreText = "Punkte: " + endScore;
 				levelView.setScoreText (scoreText);
 				notify ("grab.ball");
 				break;
@@ -76,6 +91,7 @@ public class LevelController : ScriptableObject, ILevelController
 		case "ball.hit.target":
 			{
 				++countHits;
+				hit = true;
 				levelView.playSound (3);
 				break;
 			}
@@ -95,12 +111,13 @@ public class LevelController : ScriptableObject, ILevelController
 
 				Debug.Log ("Level finished!");
 
-				decimal score = calculateScore ();
-				int newLevel = selectLevel (score);
+				List<ExerciseData> sortedList = playerData.exerciseList.OrderByDescending (o => o.score).ToList ();
+				int newLevel = selectLevel (endScore);
 
 				string endScoreText = "Treffer: " + countHits + "\n" +
 				                      "Versuche: " + attempts + "\n" +
-				                      "Endstand: " + score;
+				                      "Endstand: " + endScore + "\n" + "\n" +
+				                      "Highscore: " + sortedList [0].score;
 
 				if (newLevel > model.PlayerLevel) {
 					endScoreText += "\n" + "Level aufgestiegen!";
@@ -110,7 +127,7 @@ public class LevelController : ScriptableObject, ILevelController
 
 				levelView.setEndScoreText (endScoreText);
 
-				LoadSaveController.Save (0, countHits, attempts, score);
+				LoadSaveController.Save (0, countHits, attempts, endScore);
 
 				model.lStatus = LevelModel.LevelStatus.LevelFinished;
 
@@ -123,28 +140,38 @@ public class LevelController : ScriptableObject, ILevelController
 		}
 	}
 
-	private decimal calculateScore ()
+	/*private decimal calculateScore ()
 	{
+
+
+
+
 		if (attempts > 0) {
-			return Math.Round ((decimal)(((countHits / attempts) * 2 + attempts) * 100));
+			//return Math.Round ((decimal)(((countHits / attempts) * 2 + attempts) * 100));
+			return Math.Round ((decimal)(((countHits / attempts) * (attempts / 60)) * 1000));
 		} else {
 			return 0;
 		}
-	}
+	}*/
 
-	private int selectLevel (decimal score)
+	private int selectLevel (float score)
 	{
 		if (playerData.exerciseList.Count > 1) {
+			List<ExerciseData> sortedList = playerData.exerciseList.OrderByDescending (o => o.timeStamp).ToList ();
+
 			int level = 0;
-			if (model.PlayerLevel == 1 && playerData.exerciseList [playerData.exerciseList.Count - 1].score < score && playerData.exerciseList [playerData.exerciseList.Count - 2].score < score) {
-				level = 2;
+			if (model.PlayerLevel == 1) {
+				if (sortedList [playerData.exerciseList.Count - 1].score < score && sortedList [playerData.exerciseList.Count - 2].score < score) {
+					level = 2;
+				} else {
+					level = 1;
+				}
 			} else {
-				level = 1;
-			}
-			if (model.PlayerLevel == 2 && playerData.exerciseList [playerData.exerciseList.Count - 1].score > score && playerData.exerciseList [playerData.exerciseList.Count - 2].score > score) {
-				level = 1;
-			} else {
-				level = 2;
+				if (sortedList [playerData.exerciseList.Count - 1].score > score && sortedList [playerData.exerciseList.Count - 2].score > score) {
+					level = 1;
+				} else {
+					level = 2;
+				}
 			}
 
 			return level;

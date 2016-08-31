@@ -1,8 +1,10 @@
-﻿[System.Serializable]
+﻿using System;
+
+[System.Serializable]
 public class ExerciseData
 {
-	public string timeStamp;
+	public DateTime timeStamp;
 	public int countHits;
 	public int attempts;
-	public decimal score;
+	public float score;
 }
