@@ -31,7 +31,6 @@ public class BallController : MonoBehaviour
 		}
 	}
 
-	// Use this for initialization
 	void Start ()
 	{
 		levelController = GameObject.Find ("App").GetComponent<App> ().LevelController;
@@ -42,7 +41,6 @@ public class BallController : MonoBehaviour
 		ballCollider = GetComponent<SphereCollider> ();
 	}
 
-	// Update is called once per frame
 	void Update ()
 	{
 		if (ballTriggered) {

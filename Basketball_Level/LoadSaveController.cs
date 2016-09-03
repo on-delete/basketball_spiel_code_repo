@@ -29,6 +29,10 @@ public class LoadSaveController
 
 		bf.Serialize (file, data);
 		file.Close ();
+
+		/*For testing purpose only!*/
+		File.AppendAllText (Application.persistentDataPath + "/playerDataTest.txt", "TimeStamp: " + exerciseData.timeStamp + "; Hits: " + exerciseData.countHits + "; Attempts: " + exerciseData.attempts + "; Score: " + exerciseData.score + "; Level: " + data.level);
+		/*For testing purpose only!*/
 	}
 
 	public static PlayerData Load ()

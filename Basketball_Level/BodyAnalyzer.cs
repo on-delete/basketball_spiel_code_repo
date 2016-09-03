@@ -61,31 +61,27 @@ public class BodyAnalyzer : MonoBehaviour
 		postureFail,
 	}
 
-	// Use this for initialization
 	void Start ()
 	{
 		isThrown = 0;
 		lastPosture = LevelModel.BodyPose.Unknown;
 	}
 
-	// Update is called once per frame
 	void Update ()
 	{
 		if (kinectManager == null) {
 			kinectManager = KinectManager.Instance;
-		}/* else if (model == null) {
-			model = app.GetComponent<App> ().LevelModel;
-		}*/ else {
-			if (kinectManager.GetUsersCount () > 0) {
+		} else {
+			if (kinectManager.GetUsersCount () > 0 && model.lStatus != LevelModel.LevelStatus.LevelFinished) {
 				long userId = kinectManager.GetAllUserIds () [0];
 				lStatus = model.lStatus;
 				ballPosition = model.BallPosition;
 
 				getBodyJoints (userId);
 
-				model.Posture = getLastPosture (bodyJoints ["hipLeftPos"], bodyJoints ["hipRightPos"], bodyJoints ["kneeLeftPos"], bodyJoints ["kneeRightPos"], bodyJoints ["footLeftPos"], bodyJoints ["footRightPos"], bodyJoints ["shoulderLeftPos"], bodyJoints ["shoulderRightPos"]);
-				if (model.Posture != LevelModel.BodyPose.Unknown) {
-					lastPosture = model.Posture;
+				lastPosture = getLastPosture (bodyJoints ["hipLeftPos"], bodyJoints ["hipRightPos"], bodyJoints ["kneeLeftPos"], bodyJoints ["kneeRightPos"], bodyJoints ["footLeftPos"], bodyJoints ["footRightPos"], bodyJoints ["shoulderLeftPos"], bodyJoints ["shoulderRightPos"]);
+				if (lastPosture != LevelModel.BodyPose.Unknown) {
+					model.Posture = lastPosture;
 				}
 
 				if (lStatus == LevelModel.LevelStatus.WaitForStartGesture) {
@@ -103,19 +99,21 @@ public class BodyAnalyzer : MonoBehaviour
 							freezingRoutine = null;
 						}
 					}
-
-					int progress = 0;
+						
 					if (lStatus == LevelModel.LevelStatus.GrabBall) {
-						progress = calculateProgress ();
+						calculateProgress ();
 					}
 
-					//if (lStatus != LevelModel.LevelStatus.None && lStatus != LevelModel.LevelStatus.LevelFinished && model.Posture == LevelModel.BodyPose.Sitting && progress == 0) {
 					checkPisaPosture (calculateDriftAngleToSight (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]), calculateDriftAngleToFrontAndBack (bodyJoints ["spineBasePos"], bodyJoints ["spineMidPos"], bodyJoints ["spineShoulderPos"], bodyJoints ["neckPos"]));
-					//}
 
 					if (lStatus == LevelModel.LevelStatus.ThrowBall) {
 						calculateBallVelocity ();
 					}
+				}
+			} else {
+				if (freezingRoutine != null) {
+					StopCoroutine (freezingRoutine);
+					freezingRoutine = null;
 				}
 			}
 		}
@@ -206,17 +204,11 @@ public class BodyAnalyzer : MonoBehaviour
 					lastHandPosition = currentHandPosition;
 				}
 
-				//Debug.Log ("current hand right: " + currentRightHandPosition.x + " " + currentRightHandPosition.y + " " + currentRightHandPosition.z);
-				//Debug.Log ("last hand right: " + lastRightHandPosition.x + " " + lastRightHandPosition.y + " " + lastRightHandPosition.z);
-
 				if (currentHandPosition.y > lastHandPosition.y && currentHandPosition.z < lastHandPosition.z) {
-
 					float handVelocity = (currentHandPosition.y - lastHandPosition.y) / Time.deltaTime;
-					Debug.Log ("Test: " + handVelocity);
 					if (handVelocity > minThrowVelocity && handVelocity < 10) {
 						velocityList.Add (handVelocity);
 						isThrown = 1;
-						//Debug.Log ("Test: " + handVelocity);
 					}
 				}
 
@@ -243,9 +235,6 @@ public class BodyAnalyzer : MonoBehaviour
 
 					Vector3 bestthrowspeed = calculateBestThrowSpeed (new Vector3 (0, ball.transform.position.y, ball.transform.position.z), target.transform.position, 1.0f);
 
-					Debug.Log ("best speed: " + bestthrowspeed.y + " " + bestthrowspeed.z);
-					Debug.Log ("avgvelo: " + avgVelocity);
-
 					float percentageAvgToBestY = (100 * (avgVelocity * 2)) / bestthrowspeed.y;
 					float percentageAvgToBestZ = (100 * avgVelocity) / bestthrowspeed.z;
 
@@ -271,16 +260,14 @@ public class BodyAnalyzer : MonoBehaviour
 
 	private void checkPisaPosture (decimal driftAngleSight, decimal driftAngleFrontBack)
 	{
-		if (driftAngleSight > 10 || driftAngleSight < -10 || driftAngleFrontBack > 10  /*|| driftAngleFrontBack < -10*/) {
+		if (driftAngleSight > 10 || driftAngleSight < -10 || driftAngleFrontBack > 10 || driftAngleFrontBack < -10) {
 			if (lastPostureStatus == PostureSatus.postureCorrect) {
-				Debug.Log ("Neigung zu groß!");
 				lastPostureStatus = PostureSatus.postureFail;
 				playerController.PisaPostureFound ();
 
 			}
-		} else if (driftAngleSight <= 10 && driftAngleSight >= -10 && driftAngleFrontBack <= 10 /*&& driftAngleFrontBack >= -10*/) {
+		} else if (driftAngleSight <= 10 && driftAngleSight >= -10 && driftAngleFrontBack <= 10 && driftAngleFrontBack >= -10) {
 			if (lastPostureStatus == PostureSatus.postureFail) {
-				Debug.Log ("Gute Position!");
 				lastPostureStatus = PostureSatus.postureCorrect;
 				playerController.PisaPostureCorrected ();
 			}
@@ -344,9 +331,6 @@ public class BodyAnalyzer : MonoBehaviour
 		decimal leftBodyAngle = calculate3PointAngle (shoulderLeftPos, hipsLeftPos, footLeftPos);
 		decimal rightBodyAngle = calculate3PointAngle (shoulderRightPos, hipsRightPos, footRightPos);
 
-		//leftArmDriftText.text = "Left Leg Drift: " + leftLegAngle;
-		//rightArmDriftText.text = "Right Leg Drift: " + rightLegAngle;
-
 		if ((leftLegAngle > 140 && leftLegAngle < 180) || (rightLegAngle > 140 && rightLegAngle < 180)) {
 			if (leftBodyAngle > 120 || rightBodyAngle > 120) {
 				return LevelModel.BodyPose.Standing;
@@ -380,7 +364,7 @@ public class BodyAnalyzer : MonoBehaviour
 		return Math.Round ((decimal)(Mathf.Acos (skalar / (v1length * v2length)) * Mathf.Rad2Deg), 2);
 	}
 
-	private int calculateProgress ()
+	private void calculateProgress ()
 	{
 		int handProgress = 0;
 
@@ -393,9 +377,6 @@ public class BodyAnalyzer : MonoBehaviour
 			} else {
 				handPosition = GameObject.FindGameObjectWithTag ("rightHand").transform.position;
 			}
-
-			/*Vector3 vector = new Vector3 ((targetPosition.x - handPosition.x), (targetPosition.y - handPosition.y), (targetPosition.z - handPosition.z));
-			lastDistanceHandToTarget = Mathf.Sqrt (Mathf.Pow (vector.x, 2) + Mathf.Pow (vector.y, 2) + Mathf.Pow (vector.z, 2));*/
 
 			lastDistanceHandToTarget = Vector3.Distance (targetPosition, handPosition);
 
@@ -423,18 +404,8 @@ public class BodyAnalyzer : MonoBehaviour
 				handProgress = 0;
 			}
 
-			//Debug.Log ("Progress: " + handProgress + "distance: " + lastDistanceHandToTarget);
-
 			setBallGlowToProgress (handProgress, ball);
-
-			return handProgress;
-		} else {
-			//progress = 0;
-			//resetWorksuitMeshGlowEffect ();
-
-			return 0;
 		}
-
 	}
 
 	private void setBallGlowToProgress (int handProgress, GameObject ball)
@@ -442,8 +413,6 @@ public class BodyAnalyzer : MonoBehaviour
 		Material ballMaterial = ball.GetComponent<MeshRenderer> ().material;
 
 		float colourPercentage = calculateColourPercentage (handProgress);
-
-		//Debug.Log ("Prozent: " + colourPercentage);
 
 		if (handProgress < 50) {
 			ballMaterial.SetColor ("_MKGlowColor", new Color32 (180, (byte)colourPercentage, 0, 255));
@@ -515,10 +484,8 @@ public class BodyAnalyzer : MonoBehaviour
 
 				if (leftHandFreezed && rightHandFreezed) {
 					playerController.FreezingDetected ();
-					Debug.Log ("Freezing!");
 				} else {
 					playerController.FreezingCorrected ();
-					Debug.Log ("Kein Freezing!");
 				}
 
 			}

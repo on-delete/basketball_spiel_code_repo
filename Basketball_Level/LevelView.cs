@@ -27,6 +27,7 @@ public class LevelView : MonoBehaviour, ILevelView
 	public GUIText startTimerText;
 	public GUIText scoreText;
 	public GUIText endScoreText;
+	public GUIText gestureText;
 
 	public AudioClip shoortBeep;
 	//0
@@ -51,7 +52,7 @@ public class LevelView : MonoBehaviour, ILevelView
 	private AudioSource source;
 
 	private int time;
-	private int maxTime = 10;
+	private int maxTime = 1;
 
 	private Coroutine startTimerRoutine = null;
 	private Coroutine timerRoutine = null;
@@ -156,6 +157,8 @@ public class LevelView : MonoBehaviour, ILevelView
 
 	IEnumerator startTimer ()
 	{
+		gestureText.text = "";
+
 		for (int i = 3; i > 0; i--) {
 			yield return new WaitForSeconds (1);
 

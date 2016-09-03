@@ -31,13 +31,11 @@ public class App : MonoBehaviour
 		}
 	}
 
-	// Use this for initialization
 	void Start ()
 	{
 		levelModel = new LevelModel ();
 
 		playerController = new PlayerController (playerView, levelModel);
-
 
 		levelController = ScriptableObject.CreateInstance<LevelController> ();
 		levelController.init (levelModel, levelView);

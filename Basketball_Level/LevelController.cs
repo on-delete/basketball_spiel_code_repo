@@ -27,8 +27,8 @@ public class LevelController : ScriptableObject, ILevelController
 		model.isSoundActivated = true;
 
 		playerData = LoadSaveController.Load ();
-		//model.PlayerLevel = playerData.level;
-		model.PlayerLevel = 1;
+		model.PlayerData = playerData;
+		model.PlayerLevel = playerData.level;
 		model.BallPosition = LevelModel.ObjectPosition.Left;
 	}
 
@@ -111,25 +111,40 @@ public class LevelController : ScriptableObject, ILevelController
 
 				Debug.Log ("Level finished!");
 
-				List<ExerciseData> sortedList = playerData.exerciseList.OrderByDescending (o => o.score).ToList ();
+				List<ExerciseData> sortedList = model.PlayerData.exerciseList.OrderByDescending (o => o.score).ToList ();
 				int newLevel = selectLevel (endScore);
+
+				float highscore = 0;
+
+				if (sortedList.Count > 0) {
+					highscore = sortedList [0].score;
+				}
 
 				string endScoreText = "Treffer: " + countHits + "\n" +
 				                      "Versuche: " + attempts + "\n" +
 				                      "Endstand: " + endScore + "\n" + "\n" +
-				                      "Highscore: " + sortedList [0].score;
+				                      "Highscore: " + highscore;
 
 				if (newLevel > model.PlayerLevel) {
 					endScoreText += "\n" + "Level aufgestiegen!";
 				} else if (newLevel < model.PlayerLevel) {
 					endScoreText += "\n" + "Level abgestiegen!";
+				} else {
+					endScoreText += "\n" + "Keine Leveländerung!";
 				}
 
 				levelView.setEndScoreText (endScoreText);
 
-				LoadSaveController.Save (0, countHits, attempts, endScore);
+				LoadSaveController.Save (newLevel, countHits, attempts, endScore);
 
 				model.lStatus = LevelModel.LevelStatus.LevelFinished;
+
+				AudioSource[] audioSources = GameObject.FindObjectsOfType<AudioSource> ();
+				if (audioSources.Count () > 0) {
+					for (int i = 0; i < audioSources.Count (); i++) {
+						audioSources [i].Stop ();
+					}
+				}
 
 				break;
 			}
@@ -140,34 +155,20 @@ public class LevelController : ScriptableObject, ILevelController
 		}
 	}
 
-	/*private decimal calculateScore ()
+	private int selectLevel (float newScore)
 	{
-
-
-
-
-		if (attempts > 0) {
-			//return Math.Round ((decimal)(((countHits / attempts) * 2 + attempts) * 100));
-			return Math.Round ((decimal)(((countHits / attempts) * (attempts / 60)) * 1000));
-		} else {
-			return 0;
-		}
-	}*/
-
-	private int selectLevel (float score)
-	{
-		if (playerData.exerciseList.Count > 1) {
-			List<ExerciseData> sortedList = playerData.exerciseList.OrderByDescending (o => o.timeStamp).ToList ();
+		if (model.PlayerData.exerciseList.Count > 1) {
+			List<ExerciseData> sortedList = model.PlayerData.exerciseList.OrderByDescending (o => o.timeStamp).ToList ();
 
 			int level = 0;
 			if (model.PlayerLevel == 1) {
-				if (sortedList [playerData.exerciseList.Count - 1].score < score && sortedList [playerData.exerciseList.Count - 2].score < score) {
+				if (sortedList [sortedList.Count - 1].score < newScore && sortedList [sortedList.Count - 2].score < newScore) {
 					level = 2;
 				} else {
 					level = 1;
 				}
 			} else {
-				if (sortedList [playerData.exerciseList.Count - 1].score > score && sortedList [playerData.exerciseList.Count - 2].score > score) {
+				if (sortedList [sortedList.Count - 1].score > newScore && sortedList [sortedList.Count - 2].score > newScore) {
 					level = 1;
 				} else {
 					level = 2;

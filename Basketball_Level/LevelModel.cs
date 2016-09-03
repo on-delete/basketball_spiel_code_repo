@@ -91,6 +91,17 @@ public class LevelModel
 		}
 	}
 
+	private PlayerData playerData;
+
+	public PlayerData PlayerData {
+		get {
+			return playerData;
+		}
+		set {
+			playerData = value;
+		}
+	}
+
 	private bool soundActivated;
 
 	public bool isSoundActivated {
